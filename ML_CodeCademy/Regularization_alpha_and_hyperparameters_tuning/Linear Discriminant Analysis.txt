@@ -1,0 +1,27 @@
+# Import libraries
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+# Load data
+beans = pd.read_csv('beans.csv')
+X = beans.drop('Class', axis=1)
+y = beans['Class']
+
+# Create an LDA model
+lda = LinearDiscriminantAnalysis(n_components=1) # number of the new dimensions = number of classes - 1
+
+# Fit lda to X and y and create a subspace X_new
+X_new = lda.fit_transform(X, y)
+
+
+# Create a logistic regression model
+lr = LogisticRegression()
+
+# Fit lr to X_new and y
+lr.fit(X_new, y)
+lr_acc = lr.score(X_new, y)
+
+# Model accuracy
+print(lr_acc)
+

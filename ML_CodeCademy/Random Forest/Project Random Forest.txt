@@ -1,0 +1,123 @@
+import pandas as pd
+import numpy as np
+import codecademylib3
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#Import models from scikit learn module:
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, RandomForestRegressor
+from sklearn import tree
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+
+col_names = ['age', 'workclass', 'fnlwgt','education', 'education-num', 
+'marital-status', 'occupation', 'relationship', 'race', 'sex',
+'capital-gain','capital-loss', 'hours-per-week','native-country', 'income']
+df = pd.read_csv('adult.data', header=None, names = col_names)
+
+#Distribution of income
+distribution = df['income'].value_counts(normalize=True) * 100 # unique values; from 0 to 1; * 100
+print("Income Distribution:")
+print(distribution)
+
+#Clean columns by stripping extra whitespace for columns of type "object"
+df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+
+#Create feature dataframe X with feature columns and dummy variables for categorical features
+feature_cols = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status', 
+                'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 
+                'hours-per-week', 'native-country'] # all but 'income'
+X = pd.get_dummies(df[feature_cols], drop_first=True) # dropfirst is to eliminate redundant features
+
+#Create output variable y which is binary, 0 when income is less than 50k, 1 when it is greather than 50k
+y = df['income'].apply(lambda x: 1 if x == '>50K' else 0)
+
+#Split data into a train and test set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+#Instantiate random forest classifier, fit and score with default parameters
+rf = RandomForestClassifier()
+rf.fit(X_train, y_train)
+y_pred = rf.predict(X_test)
+baseline_accuracy = accuracy_score(y_test, y_pred)
+print(f"Baseline Random Forest Accuracy: {baseline_accuracy:.4f}")
+
+#Tune the hyperparameter max_depth over a range from 1-25, save scores for test and train set
+np.random.seed(0)
+accuracy_train, accuracy_test = [], []
+depth_range = range(1, 26) # range of tree levels
+
+for depth in depth_range:
+    model = RandomForestClassifier(max_depth=depth)
+    model.fit(X_train, y_train)
+    accuracy_train.append(model.score(X_train, y_train))
+    accuracy_test.append(model.score(X_test, y_test))
+ 
+#Find the best accuracy and at what depth that occurs
+best_depth = depth_range[np.argmax(accuracy_test)]
+print(f"Best max_depth: {best_depth}, Accuracy: {max(accuracy_test):.4f}")
+
+
+#Plot the accuracy scores for the test and train set over the range of depth values  
+plt.figure(figsize=(10, 5))
+plt.plot(depth_range, accuracy_train, label="Train Accuracy", marker='o')
+plt.plot(depth_range, accuracy_test, label="Test Accuracy", marker='s')
+plt.xlabel("Max Depth")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.title("Accuracy vs. Tree Depth")
+plt.show()
+
+#Save the best random forest model and save the feature importances in a dataframe
+best_rf = RandomForestClassifier(max_depth=best_depth, random_state=42)
+best_rf.fit(X_train, y_train)
+
+#Create two new features, based on education and native country
+df['education_bin'] = pd.cut(df['education-num'], [0,9,13,16], labels=['HS or less', 'College to Bachelors', 'Masters or more']) # convert continuous data from column to categorical and uses it asa new feature
+
+feature_cols = ['age', 'capital-gain', 'capital-loss', 'hours-per-week', 'sex', 'race','education_bin']
+
+#Use this new additional feature and recreate X and test/train split
+X_new = pd.get_dummies(df[feature_cols], drop_first=True)
+X_train_new, X_test_new, y_train, y_test = train_test_split(X_new, y, test_size=0.2, random_state=1)
+
+#Find the best max depth now with the additional two features
+accuracy_train_new, accuracy_test_new = [], []
+depth_range = range(1, 26)  # Range of max_depth values
+
+for depth in depth_range:
+    model = RandomForestClassifier(max_depth=depth)
+    model.fit(X_train_new, y_train)
+    accuracy_train_new.append(model.score(X_train_new, y_train))
+    accuracy_test_new.append(model.score(X_test_new, y_test))
+
+
+# Find the best accuracy and the best max_depth value on the test data
+best_depth_new = depth_range[np.argmax(accuracy_test_new)]
+print(f"Best max_depth with new features: {best_depth_new}, Accuracy: {max(accuracy_test_new):.4f}")
+
+# Plot the training and test accuracy against max_depth
+plt.figure(figsize=(10, 5))
+plt.plot(depth_range, accuracy_train_new, label="Train Accuracy", marker='o')
+plt.plot(depth_range, accuracy_test_new, label="Test Accuracy", marker='s')
+plt.xlabel("Max Depth")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.title("Accuracy vs. Tree Depth (With Education Binned)")
+plt.show()
+
+# Refit the model using the best max_depth and save the feature importances
+best_rf_new = RandomForestClassifier(max_depth=best_depth_new, random_state=1)
+best_rf_new.fit(X_train_new, y_train)
+
+# Get feature importances and print the top 5
+feature_importances = pd.DataFrame(best_rf_new.feature_importances_, index=X_new.columns, columns=["Importance"]).sort_values("Importance", ascending=False)
+print("Top 5 Feature Importances:")
+print(feature_importances.head())
+plt.show(block=True)
+
+
+

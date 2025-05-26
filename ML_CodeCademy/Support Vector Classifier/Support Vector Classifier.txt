@@ -1,0 +1,43 @@
+from sklearn.svm import SVC
+from graph import points, labels
+
+classifier = SVC(kernel = 'linear')
+classifier.fit(points, labels)
+
+print(classifier.predict([[3,4], [6,7]]))
+
+
+### next page
+
+import codecademylib3_seaborn
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from graph import points, labels, draw_points, draw_margin
+
+classifier = SVC(kernel='linear', C = 0.9)
+points.append([3,3])
+points.append([6,7])
+points.append([4,8])
+labels.append(0); labels.append(1); labels.append(1)
+classifier.fit(points, labels)
+
+draw_points(points, labels)
+draw_margin(classifier)
+
+plt.show()
+
+
+### next page
+
+import codecademylib3_seaborn
+from sklearn.svm import SVC
+from graph import points, labels
+from sklearn.model_selection import train_test_split
+
+training_data, validation_data, training_labels, validation_labels = train_test_split(points, labels, train_size = 0.8, test_size = 0.2, random_state = 100)
+
+#classifier = SVC(kernel = 'linear')
+classifier = SVC(kernel = 'poly', degree = 2)
+classifier.fit(training_data, training_labels)
+
+print(classifier.score(validation_data, validation_labels))

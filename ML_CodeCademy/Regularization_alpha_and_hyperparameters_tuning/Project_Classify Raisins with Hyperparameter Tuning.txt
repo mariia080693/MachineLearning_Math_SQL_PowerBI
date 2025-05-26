@@ -1,0 +1,248 @@
+Classify Raisins with Hyperparameter Tuning Project
+View Solution Notebook
+View Project Page
+1. Explore the Dataset
+# 1. Setup
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+​
+raisins = pd.read_csv('Raisin_Dataset.csv')
+raisins.head()
+Area	MajorAxisLength	MinorAxisLength	Eccentricity	ConvexArea	Extent	Perimeter	Class
+0	87524	442.246011	253.291155	0.819738	90546	0.758651	1184.040	0
+1	75166	406.690687	243.032436	0.801805	78789	0.684130	1121.786	0
+2	90856	442.267048	266.328318	0.798354	93717	0.637613	1208.575	0
+3	45928	286.540559	208.760042	0.684989	47336	0.699599	844.162	0
+4	79408	352.190770	290.827533	0.564011	81463	0.792772	1073.251	0
+Classify Raisins with Hyperparameter Tuning Project
+View Solution Notebook
+View Project Page
+1. Explore the Dataset
+# 1. Setup
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+​
+raisins = pd.read_csv('Raisin_Dataset.csv')
+raisins.head()
+Area	MajorAxisLength	MinorAxisLength	Eccentricity	ConvexArea	Extent	Perimeter	Class
+0	87524	442.246011	253.291155	0.819738	90546	0.758651	1184.040	0
+1	75166	406.690687	243.032436	0.801805	78789	0.684130	1121.786	0
+2	90856	442.267048	266.328318	0.798354	93717	0.637613	1208.575	0
+3	45928	286.540559	208.760042	0.684989	47336	0.699599	844.162	0
+4	79408	352.190770	290.827533	0.564011	81463	0.792772	1073.251	0
+# 2. Create predictor and target variables, X and y
+# 3. Examine the dataset
+print(len(x.columns))
+print(len(x))
+print(sum(y==1))
+7
+900
+450
+# 4. Split the data set into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=19)
+2. Grid Search with Decision Tree Classifier
+# 5. Create a Decision Tree model
+tree = DecisionTreeClassifier()
+# 6. Dictionary of parameters for GridSearchCV
+parameters = {'max_depth':(3,5,7), 'min_samples_split':(2,3,4)}
+# 7. Create a GridSearchCV model
+grid = GridSearchCV(tree, param_grid = parameters)
+​
+​
+# Fit the GridSearchCV model to the training data
+grid.fit(X_train,y_train) 
+​
+GridSearchCV
+estimator: DecisionTreeClassifier
+
+DecisionTreeClassifier
+# 8. Print the model and hyperparameters obtained by GridSearchCV
+print(grid.best_estimator_)
+​
+# Print best score
+print(grid.best_score_)
+# Print the accuracy of the final model on the test data
+print(grid.score(X_test, y_test))
+DecisionTreeClassifier(max_depth=3)
+0.8541666666666667
+0.8555555555555555
+# 9. Print a table summarizing the results of GridSearchCV
+print(grid.cv_results_['mean_test_score'])
+print(grid.cv_results_['params'])
+​
+# to make a table of the results
+scores_df = pd.DataFrame(grid.cv_results_['mean_test_score'], columns=['mean_test_score'])
+params_df = pd.DataFrame(grid.cv_results_['params'])
+result_df = pd.concat([params_df, scores_df], axis=1)
+​
+# Print the resulting DataFrame to view the scores for each hyperparameter combination
+print(result_df)
+​
+[0.85416667 0.85277778 0.85416667 0.84722222 0.85277778 0.84166667
+ 0.81666667 0.825      0.82222222]
+[{'max_depth': 3, 'min_samples_split': 2}, {'max_depth': 3, 'min_samples_split': 3}, {'max_depth': 3, 'min_samples_split': 4}, {'max_depth': 5, 'min_samples_split': 2}, {'max_depth': 5, 'min_samples_split': 3}, {'max_depth': 5, 'min_samples_split': 4}, {'max_depth': 7, 'min_samples_split': 2}, {'max_depth': 7, 'min_samples_split': 3}, {'max_depth': 7, 'min_samples_split': 4}]
+   max_depth  min_samples_split  mean_test_score
+0          3                  2         0.854167
+1          3                  3         0.852778
+2          3                  4         0.854167
+3          5                  2         0.847222
+4          5                  3         0.852778
+5          5                  4         0.841667
+6          7                  2         0.816667
+7          7                  3         0.825000
+8          7                  4         0.822222
+2. Random Search with Logistic Regression
+# 10. The logistic regression model
+lr = LogisticRegression(solver = 'liblinear', max_iter = 1000)
+# 11. Define distributions to choose hyperparameters from
+import numpy as np
+distributions = {'penalty':('l1', 'l2'), 'C':np.random.uniform(0, 100, size=10)}
+# 12. Create a RandomizedSearchCV model
+clf = RandomizedSearchCV(lr, distributions, n_iter = 8)
+​
+​
+# Fit the random search model
+clf.fit(X, y) 
+RandomizedSearchCV
+estimator: LogisticRegression
+
+LogisticRegression
+# 13. Print best esimator and best score
+​
+# Print a table summarizing the results of RandomSearchCV
+df = pd.concat([pd.DataFrame(clf.cv_results_['params']), pd.DataFrame(clf.cv_results_['mean_test_score'], columns=['Accuracy'])] ,axis=1)
+print(df.sort_values('Accuracy', ascending = False))
+​
+​
+  penalty          C  Accuracy
+4      l2  26.198589  0.867778
+0      l2  93.438112  0.866667
+1      l2  82.312598  0.866667
+3      l2  30.112153  0.866667
+5      l2  88.094889  0.866667
+7      l2  58.782786  0.866667
+2      l1  88.094889  0.854444
+6      l1  42.714637  0.854444
+​
+# 2. Create predictor and target variables, X and y
+
+
+print(len(x))
+print(su
+# 3. Examine the dataset
+print(len(x.columns))
+print(len(x))
+print(sum(y==1))
+7
+900
+450
+# 4. Split the data set into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=19)
+2. Grid Search with Decision Tree Classifier
+tree = DecisionTreeClassifier()
+# 5. Create a Decision Tree model
+tree = DecisionTreeClassifier()
+{'max_depth':(3,5,7), 'min_samples_split':(2,3,4)}
+# 6. Dictionary of parameters for GridSearchCV
+parameters = {'max_depth':(3,5,7), 'min_samples_split':(2,3,4)}
+grid = GridSearchCV(tree, param_grid = parameters)
+
+
+# Fit the GridSearchCV model to the training data
+grid.fit(X_train,y_train) 
+
+# 7. Create a GridSearchCV model
+grid = GridSearchCV(tree, param_grid = parameters)
+​
+​
+# Fit the GridSearchCV model to the training data
+grid.fit(X_train,y_train) 
+​
+GridSearchCV
+estimator: DecisionTreeClassifier
+
+DecisionTreeClassifier
+print(grid.best_estimator_)
+
+# Print best score
+print(grid.best_score_)
+# Print the accuracy of the final model on the test data
+print(grid.score(X_test, y_test))
+# 8. Print the model and hyperparameters obtained by GridSearchCV
+print(grid.best_estimator_)
+​
+# Print best score
+print(grid.best_score_)
+# Print the accuracy of the final model on the test data
+print(grid.score(X_test, y_test))
+DecisionTreeClassifier(max_depth=3)
+0.8541666666666667
+0.8555555555555555
+# to make a table of the results
+# 9. Print a table summarizing the results of GridSearchCV
+print(grid.cv_results_['mean_test_score'])
+print(grid.cv_results_['params'])
+​
+# to make a table of the results
+scores_df = pd.DataFrame(grid.cv_results_['mean_test_score'], columns=['mean_test_score'])
+params_df = pd.DataFrame(grid.cv_results_['params'])
+result_df = pd.concat([params_df, scores_df], axis=1)
+​
+# Print the resulting DataFrame to view the scores for each hyperparameter combination
+print(result_df)
+​
+[0.85416667 0.85277778 0.85416667 0.84722222 0.85277778 0.84166667
+ 0.81666667 0.825      0.82222222]
+[{'max_depth': 3, 'min_samples_split': 2}, {'max_depth': 3, 'min_samples_split': 3}, {'max_depth': 3, 'min_samples_split': 4}, {'max_depth': 5, 'min_samples_split': 2}, {'max_depth': 5, 'min_samples_split': 3}, {'max_depth': 5, 'min_samples_split': 4}, {'max_depth': 7, 'min_samples_split': 2}, {'max_depth': 7, 'min_samples_split': 3}, {'max_depth': 7, 'min_samples_split': 4}]
+   max_depth  min_samples_split  mean_test_score
+0          3                  2         0.854167
+1          3                  3         0.852778
+2          3                  4         0.854167
+3          5                  2         0.847222
+4          5                  3         0.852778
+5          5                  4         0.841667
+6          7                  2         0.816667
+7          7                  3         0.825000
+8          7                  4         0.822222
+2. Random Search with Logistic Regression
+# 10. The logistic regression model
+lr = LogisticRegression(solver = 'liblinear', max_iter = 1000)
+# 11. Define distributions to choose hyperparameters from
+import numpy as np
+distributions = {'penalty':('l1', 'l2'), 'C':np.random.uniform(0, 100, size=10)}
+# 12. Create a RandomizedSearchCV model
+clf = RandomizedSearchCV(lr, distributions, n_iter = 8)
+​
+​
+# Fit the random search model
+clf.fit(X, y) 
+RandomizedSearchCV
+estimator: LogisticRegression
+
+LogisticRegression
+
+
+# 13. Print best esimator and best score
+​
+# Print a table summarizing the results of RandomSearchCV
+df = pd.concat([pd.DataFrame(clf.cv_results_['params']), pd.DataFrame(clf.cv_results_['mean_test_score'], columns=['Accuracy'])] ,axis=1)
+print(df.sort_values('Accuracy', ascending = False))
+​
+​
+  penalty          C  Accuracy
+4      l2  26.198589  0.867778
+0      l2  93.438112  0.866667
+1      l2  82.312598  0.866667
+3      l2  30.112153  0.866667
+5      l2  88.094889  0.866667
+7      l2  58.782786  0.866667
+2      l1  88.094889  0.854444
+6      l1  42.714637  0.854444

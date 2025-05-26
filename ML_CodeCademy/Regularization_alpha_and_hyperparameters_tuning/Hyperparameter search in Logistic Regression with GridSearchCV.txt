@@ -1,0 +1,18 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+
+df = pd.read_csv('candy-data.csv')
+y = df['chocolate']
+X = df.drop(columns = ['chocolate', 'competitorname'])
+model = LogisticRegression(penalty = 'l2', random_state = 42, max_iter = 10000)
+tuning_C = {'C': np.logspace(-3,2, 100)}
+
+# Implement GridSearchCV setting scoring to 'accuracy'
+
+gs = GridSearchCV(model, param_grid = tuning_C, scoring = 'accuracy', cv = 5)
+gs.fit(X, y)
+
+# Print the best C value
+print(gs.best_params_, gs.best_score_)
